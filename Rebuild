@@ -1,0 +1,6 @@
+make clean
+make
+
+echo
+echo "Press any key"
+read -n 1
