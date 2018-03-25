@@ -67,9 +67,9 @@ Disp::Disp(const char *bp_names[], unsigned width, unsigned height)
 			MSG_ERR("SDL_CreateRGBSurface 1");
 			throw;
 		}
-		BufSurface[0] = SDL_DisplayFormat(stemp);
+		BufSurface[1] = SDL_DisplayFormat(stemp);
 		SDL_FreeSurface(stemp);
-		if (!BufSurface[0]) {
+		if (!BufSurface[1]) {
 			MSG_ERR("BufSurface 1");
 			throw;
 		}
