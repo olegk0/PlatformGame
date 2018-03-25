@@ -9,6 +9,7 @@
 
 #include <SDL/SDL.h>
 
+
 #define BG_CNTs 2
 
 class Disp {
@@ -16,7 +17,7 @@ public:
 	Disp(const char *bp_names[], unsigned width, unsigned height);
 	virtual ~Disp();
 
-	int BlitSurface(SDL_Surface *srf, SDL_Rect *sprite_rect, unsigned x, unsigned y);
+	int BlitSurface(SDL_Surface *srf, SDL_Rect *sprite_rect, int x, int y);
 	void ShowPrepare();
 	void ShowGo();
 	SDL_Surface *GetScreenSurface(){return MainSurface;};
@@ -24,7 +25,7 @@ public:
 	void Free();
 private:
 	SDL_Surface *MainSurface;
-//	SDL_Surface *BufSurface;
+	SDL_Surface *BufSurface[2];
 	SDL_Surface *BackPics[BG_CNTs];
 
 	unsigned bg_x_offs[BG_CNTs];
@@ -32,6 +33,13 @@ private:
 	unsigned disp_height;
 	unsigned frame_cnt;
 	int disp_x_offs;
+	pthread_t main_thread;
+    pthread_mutex_t th_mutex;
+    pthread_cond_t th_cond;
+    bool thread_run;
+    unsigned write_buf_num, disp_buf_num;
+
+	friend void *ThreadHandle(void *data);
 
 	void BlitBg(unsigned idx, bool BottomAlign);
 
