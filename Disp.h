@@ -9,7 +9,7 @@
 
 #include <SDL/SDL.h>
 
-
+#define VID_BUF_CNTs 2
 #define BG_CNTs 2
 
 class Disp {
@@ -24,8 +24,11 @@ public:
 	void SetDispOffset(int offs);
 	void Free();
 private:
+	Disp( const Disp&);
+	Disp& operator=( Disp& );
+
 	SDL_Surface *MainSurface;
-	SDL_Surface *BufSurface[2];
+	SDL_Surface *BufSurface[VID_BUF_CNTs];
 	SDL_Surface *BackPics[BG_CNTs];
 
 	unsigned bg_x_offs[BG_CNTs];

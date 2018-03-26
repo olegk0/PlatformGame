@@ -18,8 +18,9 @@ Disp::Disp(const char *bp_names[], unsigned width, unsigned height)
 {
 	unsigned i;
 
-	BufSurface[0] = NULL;
-	BufSurface[1] = NULL;
+	for(i=0;i<VID_BUF_CNTs;i++)
+		BufSurface[i] = NULL;
+
 	thread_run = false;
 	for(i=0;i<sizeof(BackPics) / sizeof(BackPics[0]);i++){
 		BackPics[i] = NULL;
@@ -40,46 +41,37 @@ Disp::Disp(const char *bp_names[], unsigned width, unsigned height)
     if(SDL_Init(SDL_INIT_VIDEO))
     {
     	MSG_ERR("SDL_Init");
-    	throw;
+    	throw 0;
     }
 
     try{
     	MainSurface = SDL_SetVideoMode(width, height, 0, SDL_SWSURFACE);
     	if(!MainSurface){
     		MSG_ERR("SDL_SetVideoMode");
-    		throw;
+    		throw 1;
     	}
 
-	    SDL_Surface *stemp  = SDL_CreateRGBSurface( 0 , width, height, 24, 0, 0, 0, 0);
-		if (!stemp) {
-			MSG_ERR("SDL_CreateRGBSurface 0");
-			throw;
-		}
-		BufSurface[0] = SDL_DisplayFormat(stemp);
-		SDL_FreeSurface(stemp);
-		if (!BufSurface[0]) {
-			MSG_ERR("BufSurface 0");
-			throw;
-		}
-
-	    stemp  = SDL_CreateRGBSurface( 0 , width, height, 24, 0, 0, 0, 0);
-		if (!stemp) {
-			MSG_ERR("SDL_CreateRGBSurface 1");
-			throw;
-		}
-		BufSurface[1] = SDL_DisplayFormat(stemp);
-		SDL_FreeSurface(stemp);
-		if (!BufSurface[1]) {
-			MSG_ERR("BufSurface 1");
-			throw;
-		}
+	    SDL_Surface *stemp;
+	    for(i=0;i<VID_BUF_CNTs;i++){
+	    	stemp = SDL_CreateRGBSurface( 0 , width, height, 24, 0, 0, 0, 0);
+	    	if (!stemp) {
+	    		MSG_ERR("SDL_CreateRGBSurface %d",i);
+	    		throw 2;
+	    	}
+	    	BufSurface[i] = SDL_DisplayFormat(stemp);
+	    	SDL_FreeSurface(stemp);
+	    	if (!BufSurface[0]) {
+	    		MSG_ERR("BufSurface %d",i);
+	    		throw 3;
+	    	}
+	    }
 
 		int ck = SDL_MapRGB(MainSurface->format, 255, 0, 255);
 		MSG_DBG(2, "Load bg pic :%s", bp_names[0]);
 		stemp = SDL_LoadBMP(bp_names[0]);
 		if (!stemp) {
 			MSG_ERR("SDL_LoadBMP 0");
-			throw;
+			throw 4;
 		}
 		BackPics[0] = SDL_DisplayFormat(stemp);
 		//SDL_SetColorKey(BackPic, SDL_SRCCOLORKEY | SDL_RLEACCEL, ck);
@@ -89,7 +81,7 @@ Disp::Disp(const char *bp_names[], unsigned width, unsigned height)
 		stemp = SDL_LoadBMP(bp_names[1]);
 		if (!stemp) {
 			MSG_ERR("SDL_LoadBMP 1");
-			throw;
+			throw 5;
 		}
 		BackPics[1] = SDL_DisplayFormat(stemp);
 		SDL_FreeSurface(stemp);
@@ -99,7 +91,7 @@ Disp::Disp(const char *bp_names[], unsigned width, unsigned height)
 		int ret = pthread_create(&main_thread, NULL, &ThreadHandle,	this);
 		if (ret) {
 			MSG_ERR("pthread_create");
-			throw;
+			throw 6;
 		}
 
 	//	BufSurface = SDL_CreateRGBSurface( 0 , width, height, 24, 0, 0, 0, 0);
@@ -126,21 +118,25 @@ void Disp::Free()
 	pthread_join(main_thread, NULL);
 	MSG_DBG(2, "+++");
 
-	if (MainSurface != NULL)
+	if (MainSurface != NULL){
 		SDL_FreeSurface(MainSurface);
+		MainSurface = NULL;
+	}
 
 	i = sizeof(BackPics) / sizeof(BackPics[0]);
 	while(i >= 0){
 		i--;
-		if (BackPics[i] != NULL)
+		if (BackPics[i] != NULL){
 			SDL_FreeSurface(BackPics[i]);
+			BackPics[i] = NULL;
+		}
 	}
 
-	if (BufSurface[0] != NULL)
-		SDL_FreeSurface(BufSurface[0]);
-
-	if (BufSurface[1] != NULL)
-		SDL_FreeSurface(BufSurface[1]);
+	for(i=0;i<VID_BUF_CNTs;i++)
+		if (BufSurface[i] != NULL){
+			SDL_FreeSurface(BufSurface[i]);
+			BufSurface[i] = NULL;
+		}
 
 	SDL_Quit();
 }
