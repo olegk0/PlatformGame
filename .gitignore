@@ -1,3 +1,5 @@
-/backs/
 *.xcf
+*.png
+*.gif
 *.v*
+*.o

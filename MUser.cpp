@@ -6,14 +6,13 @@
 
 #include "MUser.h"
 
-MUser::MUser(EObject *UserObj, GMap *GMap)
-:MSolidAdd(UserObj, GMap)
+MUser::MUser()
 {
 	x_drw = 0;
 	y_drw = MAP_BLOCK_SIZE * 2;
 	def_speed = USER_DEF_SPEED;
 	max_speed = USER_MAX_SPEED;
-	sprite_framedelay = 1;
+	sprite_framedelay = 5;
 }
 
 MUser::~MUser() {

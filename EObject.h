@@ -15,92 +15,127 @@
 
 using namespace std;
 
-#define SPRITE_ANI_LOOP -1
-#define SPRITE_ANI_NO_LOOP -2
-#define DEF_FRAME_DELAY 5
+#define SPRITE_ANI_LOOP (-1)
+#define SPRITE_ANI_NO_LOOP (-2)
+#define DEF_FRAME_DELAY 10
 
 class EObject {
 public:
-	typedef enum{
-		Sprite_Front_Img=0,
-		Sprite_Front_Img_v1,
-		Sprite_Down_Img,
-		Sprite_Right_Img,
-		Sprite_Left_Img,
-		Sprite_Right_Img_v1,
-		Sprite_Left_Img_v1,
-		Sprite_Jump_Right_Img,
-		Sprite_Jump_Left_Img,
-		Sprite_Atack_Right_Img,
-		Sprite_Atack_Left_Img,
-		Sprite_None_Img,
-	} sprite_num_t;
+    typedef enum {
+	Sprite_Front_Sheet = 0,
+	Sprite_Front_Sheet_v1,
+	Sprite_Down_Sheet,
+	Sprite_Right_Sheet,
+	Sprite_Left_Sheet,
+	Sprite_Right_Sheet_v1,
+	Sprite_Left_Sheet_v1,
+	Sprite_Jump_Right_Sheet,
+	Sprite_Jump_Left_Sheet,
+	Sprite_Atack_Right_Sheet,
+	Sprite_Atack_Left_Sheet,
+	Sprite_None_Sheet,
+    } sprites_sheet_num_t;
 
-	#define MAX_SPRITES (Sprite_None_Img + 2)
+#define MAX_SPRITE_SHEETS (Sprite_None_Sheet + 2)
 
 private:
     typedef struct {
 //    	bool OneShoot;
-    	unsigned delay;
-    	unsigned curr_img;
-    	unsigned img_cnt;
-    	unsigned width;
-    	unsigned heigth;
-    	Sprite *SpriteImg;
+	unsigned delay;
+	unsigned curr_img;
+	unsigned img_cnt;
+	unsigned width;
+	unsigned heigth;
+	Sprite *SpriteImg;
     } sprite_img_t;
 
 public:
-	EObject(Disp *Window);
-	virtual ~EObject();
-	EObject *GetCopyEObject();
-	void Free();
-	int LoadSprite(sprite_num_t sprite_num, string &img_path, unsigned sprite_width, unsigned min_loop_idx, bool AutoMirror=false);
-	int AssignSprite(sprite_num_t sprite_num, Sprite *PS);
-	Sprite *GetSprite(sprite_num_t sprite_num)
-	{
-		if(sprite_num >= MAX_SPRITES) return NULL;
+    EObject(const EObject *);
+    EObject(const EObject&);
+    EObject();
+    virtual ~EObject();
+    static void Init(Disp *Disp)
+    {
+	Dsp = Disp;
+    }
 
-		return Sprites[sprite_num].SpriteImg;
-	}
-	int ShowActiveSprite(unsigned x, unsigned y, int show_mode, bool FromTopCoord=false);
+    void Free();
+
+    int CopyEObject(const EObject *Src);
+    int LoadSpriteSheet(sprites_sheet_num_t sheet_num, string &img_path, unsigned sprite_width, unsigned min_loop_idx,
+	    bool AutoMirror = false);
+    int AssignSpriteSheet(sprites_sheet_num_t sheet, Sprite *PS);
+    Sprite *GetSpriteSheet(sprites_sheet_num_t sheet_num)
+    {
+	if (sheet_num >= MAX_SPRITE_SHEETS)
+	    return NULL;
+
+	return Sprites[sheet_num].SpriteImg;
+    }
+    int ShowSpriteSheet(sprites_sheet_num_t sheet_num, unsigned x, unsigned y, int show_mode, bool FromTopCoord=false,
+	    bool DecDelay=true);
+    int ShowActiveSpriteSheet(unsigned x, unsigned y, int show_mode, bool FromTopCoord=false, bool DecDelay=true);
 //	int ShowActiveSpriteAlignBottom(unsigned x, unsigned blk_y, int show_mode);
-	int SetActiveSprite(sprite_num_t sprite_num, unsigned frame_del=DEF_FRAME_DELAY)
-	{
-		if(sprite_num >= MAX_SPRITES) return -EINVAL;
-		if(Sprites[sprite_num].SpriteImg == NULL) return -EBADF;
-		active_sprite = sprite_num;
-		if(frame_del == 0)
-			Sprites[sprite_num].delay = DEF_FRAME_DELAY;
-		else
-			Sprites[sprite_num].delay = frame_del;
-		Sprites[sprite_num].curr_img = 0;
-		return 0;
-	}
-	void SetActiveSpriteBgIdx(unsigned sprite_idx) {Sprites[active_sprite].curr_img = sprite_idx;};
-	int GetActiveSpritePrmt(unsigned *width, unsigned *height)
-	{
-		if(Sprites[active_sprite].SpriteImg == NULL) return -EBADF;
+    int SetActiveSpriteSheet(sprites_sheet_num_t sheet_num, unsigned frame_del = DEF_FRAME_DELAY)
+    {
+	if (sheet_num >= MAX_SPRITE_SHEETS)
+	    return -EINVAL;
+	if (Sprites[sheet_num].SpriteImg == NULL)
+	    return -EBADF;
+	active_sprite_sheet = sheet_num;
+	if (frame_del == 0)
+	    Sprites[sheet_num].delay = DEF_FRAME_DELAY;
+	else
+	    Sprites[sheet_num].delay = frame_del;
+	Sprites[sheet_num].curr_img = 0;
+	return 0;
+    }
+    void SetActiveSpriteBeginIndex(unsigned sprite_idx)
+    {
+	Sprites[active_sprite_sheet].curr_img = sprite_idx;
+    }
 
-		*height = Sprites[active_sprite].heigth;
-		*width = Sprites[active_sprite].width;
-		return 0;
-	}
-	int GetSpritePrmt(sprite_num_t sprite_num, unsigned *img_cnt, unsigned *width, unsigned *height)
-	{
-		if(sprite_num >= MAX_SPRITES || Sprites[sprite_num].SpriteImg == NULL) return -EINVAL;
+    int GetActiveSpritePrmt(unsigned *width, unsigned *height)
+    {
+	if (Sprites[active_sprite_sheet].SpriteImg == NULL)
+	    return -EBADF;
 
-		*img_cnt = Sprites[sprite_num].img_cnt;
-		*height = Sprites[sprite_num].heigth;
-		*width = Sprites[sprite_num].width;
-		return 0;
+	*height = Sprites[active_sprite_sheet].heigth;
+	*width = Sprites[active_sprite_sheet].width;
+	return 0;
+    }
+    unsigned &GetActiveSpriteSheetCnt()
+    {
+	return Sprites[active_sprite_sheet].img_cnt;
+    }
+
+    int GetSpriteSheetPrmt(sprites_sheet_num_t sheet_num, unsigned *img_cnt, unsigned *width, unsigned *height)
+    {
+	if (sheet_num >= MAX_SPRITE_SHEETS || Sprites[sheet_num].SpriteImg == NULL)
+	    return -EINVAL;
+
+	*img_cnt = Sprites[sheet_num].img_cnt;
+	*height = Sprites[sheet_num].heigth;
+	*width = Sprites[sheet_num].width;
+	return 0;
+    }
+
+    void DecDelayActiveSpriteSheet()
+    {
+	if (frame_delay > 0) {
+	    frame_delay--;
 	}
+    }
 private:
-	sprite_img_t Sprites[MAX_SPRITES];
-	Disp *Dsp;
-	unsigned active_sprite;
-	unsigned frame_delay;
+    EObject& operator=(EObject&);
+    sprite_img_t Sprites[MAX_SPRITE_SHEETS];
+    static Disp *Dsp;
+    sprites_sheet_num_t active_sprite_sheet;
+    unsigned frame_delay;
 
-	void InitSprite(sprite_num_t sprite_num);
+    void main_init();
+    void InitSpriteSheet(sprites_sheet_num_t sprite_num);
+    void PurgeSpriteSheet(sprites_sheet_num_t sprite_num);
 };
 
 #endif /* EOBJECT_H_ */
